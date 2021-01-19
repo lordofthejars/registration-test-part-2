@@ -2,6 +2,7 @@ package org.acme;
 
 import java.net.URI;
 
+import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 import javax.ws.rs.Consumes;
@@ -22,7 +23,14 @@ public class RegistrationResource {
     @Inject
     PasswordGenerator passwordGenerator;
 
+    @Inject
+    MailService mailService;
+
+    @Inject
+    BannedUserService bannedUserService;
+
     @GET
+    @RolesAllowed("Admin")
     @Path("/{username}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response findUserByUsername(@PathParam("username") String username) {
@@ -36,13 +44,22 @@ public class RegistrationResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response insertUser(User user) {
         
-        user.password = passwordGenerator.generate();
-        user.persist();
+        if (bannedUserService.isBanned(user.username)) {
+            
+            return Response.status(Status.PRECONDITION_FAILED.getStatusCode()).build();
+        
+        } else {
 
-        URI userUri = UriBuilder.fromResource(RegistrationResource.class)
-                                          .path("/" + user.id).build();
-        return Response
-                    .created(userUri)
-                    .build();
+            user.password = passwordGenerator.generate();
+            user.persist();
+
+            mailService.sendEmail(user);
+
+            URI userUri = UriBuilder.fromResource(RegistrationResource.class)
+                                            .path("/" + user.id).build();
+            return Response
+                        .created(userUri)
+                        .build();
+        }
     }
 }

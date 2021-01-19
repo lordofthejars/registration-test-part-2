@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import javax.inject.Inject;
 
+import org.acme.api.OpenIdAuthentication;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -13,6 +14,7 @@ import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 
+@OpenIdAuthentication(username = "Ada", password = "Alexandra")
 @QuarkusTest
 public class RegeneratePasswordTest {
     
